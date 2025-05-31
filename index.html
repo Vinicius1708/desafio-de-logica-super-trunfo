@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio de Lógica Super Trunfo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0f2fe; /* Azul céu bem claro */
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #cbd5e1; /* Cinza ardósia claro */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 280px;
+            min-height: 380px; /* Ajustado para não ter botões de atributo */
+            display: flex;
+            flex-direction: column;
+        }
+        .card-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            background-color: #e2e8f0;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .card-attribute {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.2rem 0;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .card-attribute:last-child {
+            border-bottom: none;
+        }
+        .card-attribute .name { color: #475569; font-weight: 500; }
+        .card-attribute .value { color: #0f172a; font-weight: 600; }
+        .highlight-attribute {
+            background-color: #fef9c3; /* Amarelo muito claro */
+            font-weight: bold;
+        }
+        .trunfo-badge, .special-group-badge {
+            position: absolute;
+            top: 6px;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+        .trunfo-badge { right: 6px; background-color: #facc15; color: #713f12; }
+        .special-group-badge { left: 6px; background-color: #a3e635; color: #3f6212; }
+
+        .decision-button {
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+        }
+        .decision-button:hover {
+            transform: translateY(-2px);
+        }
+        .decision-button:active {
+            transform: translateY(0px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-3xl mx-auto text-center">
+        <header class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Desafio de Lógica Super Trunfo</h1>
+        </header>
+
+        <div id="challengeArea" class="bg-white p-4 sm:p-6 rounded-xl shadow-xl">
+            <div id="questionArea" class="mb-4">
+                <p class="text-md sm:text-lg font-semibold text-slate-700" id="attributeToCompareText">Atributo em foco: -</p>
+                <p class="text-sm text-slate-500" id="attributeRuleText">(Regra: -)</p>
+                <p class="mt-2 text-sm sm:text-md text-slate-600">Considerando este atributo e as regras especiais do Super Trunfo (Super Trunfo, Grupos A1-D1), qual carta venceria esta disputa?</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+                <div id="card1Display" class="card mx-auto relative">
+                    <div class="flex justify-center items-center h-full text-slate-400">Carta 1</div>
+                </div>
+                <div id="card2Display" class="card mx-auto relative">
+                    <div class="flex justify-center items-center h-full text-slate-400">Carta 2</div>
+                </div>
+            </div>
+
+            <div id="decisionButtons" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <button data-choice="card1" class="decision-button bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md">Carta da Esquerda Vence</button>
+                <button data-choice="card2" class="decision-button bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md">Carta da Direita Vence</button>
+                <button data-choice="draw" class="decision-button bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md">Empate</button>
+            </div>
+
+            <div id="feedbackArea" class="p-3 min-h-[70px] rounded-lg text-slate-700 bg-slate-100 border border-slate-200">
+                Escolha uma opção acima.
+            </div>
+
+            <button id="nextChallengeButton" class="mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hidden w-full sm:w-auto">
+                Próximo Desafio
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Deck Base e Metadados de Atributos ---
+        const fullDeck = [
+            { name: "Super Trunfo GT", image: "https://placehold.co/280x150/FFD700/000000?text=ST+GT", attributes: { "Velocidade (km/h)": 350, "Potência (HP)": 700, "Cilindrada (cc)": 6000, "Aceleração (0-100s)": 2.8 }, isSuperTrunfo: true, specialGroup: null, id: "ST" },
+            { name: "Esportivo A1", image: "https://placehold.co/280x150/FF6347/FFFFFF?text=A1", attributes: { "Velocidade (km/h)": 320, "Potência (HP)": 600, "Cilindrada (cc)": 5000, "Aceleração (0-100s)": 3.2 }, isSuperTrunfo: false, specialGroup: "A1", id: "A1" },
+            { name: "Sedan B1", image: "https://placehold.co/280x150/ADFF2F/000000?text=B1", attributes: { "Velocidade (km/h)": 250, "Potência (HP)": 300, "Cilindrada (cc)": 3000, "Aceleração (0-100s)": 5.5 }, isSuperTrunfo: false, specialGroup: "B1", id: "B1" },
+            { name: "Hatch C1", image: "https://placehold.co/280x150/87CEFA/000000?text=C1", attributes: { "Velocidade (km/h)": 220, "Potência (HP)": 180, "Cilindrada (cc)": 2000, "Aceleração (0-100s)": 7.0 }, isSuperTrunfo: false, specialGroup: "C1", id: "C1" },
+            { name: "SUV D1", image: "https://placehold.co/280x150/FFB6C1/000000?text=D1", attributes: { "Velocidade (km/h)": 200, "Potência (HP)": 250, "Cilindrada (cc)": 3500, "Aceleração (0-100s)": 6.5 }, isSuperTrunfo: false, specialGroup: "D1", id: "D1" },
+            { name: "Muscle Car Beta", image: "https://placehold.co/280x150/DDA0DD/000000?text=Beta", attributes: { "Velocidade (km/h)": 280, "Potência (HP)": 500, "Cilindrada (cc)": 6200, "Aceleração (0-100s)": 4.5 }, isSuperTrunfo: false, specialGroup: null, id: "MUSCLE1" },
+            { name: "Pickup Gamma", image: "https://placehold.co/280x150/B0E0E6/000000?text=Gamma", attributes: { "Velocidade (km/h)": 180, "Potência (HP)": 350, "Cilindrada (cc)": 4000, "Aceleração (0-100s)": 8.0 }, isSuperTrunfo: false, specialGroup: null, id: "PICKUP1" },
+            { name: "Compacto Delta", image: "https://placehold.co/280x150/98FB98/000000?text=Delta", attributes: { "Velocidade (km/h)": 190, "Potência (HP)": 150, "Cilindrada (cc)": 1600, "Aceleração (0-100s)": 9.0 }, isSuperTrunfo: false, specialGroup: null, id: "COMPACT1" },
+        ];
+
+        const attributesMeta = {
+            "Velocidade (km/h)": { lowerIsBetter: false, unit: "km/h" },
+            "Potência (HP)": { lowerIsBetter: false, unit: "HP" },
+            "Cilindrada (cc)": { lowerIsBetter: false, unit: "cc" },
+            "Aceleração (0-100s)": { lowerIsBetter: true, unit: "s" }
+        };
+
+        // Função para buscar uma carta do fullDeck pelo ID
+        function findCardById(id) {
+            const card = fullDeck.find(c => c.id === id);
+            if (!card) console.error(`Carta com ID '${id}' não encontrada no fullDeck.`);
+            return JSON.parse(JSON.stringify(card)); // Retorna uma cópia profunda
+        }
+        
+        // --- Desafios de Lógica ---
+        const logicPuzzles = [
+            {
+                id: 1,
+                card1Id: "ST", // Super Trunfo GT
+                card2Id: "A1", // Esportivo A1
+                attributeToCompare: "Velocidade (km/h)",
+                explanation: "O Esportivo A1 (grupo A1) vence o Super Trunfo GT, independentemente do atributo Velocidade, devido à regra especial dos grupos A1-D1."
+            },
+            {
+                id: 2,
+                card1Id: "ST", // Super Trunfo GT
+                card2Id: "MUSCLE1", // Muscle Car Beta (normal)
+                attributeToCompare: "Aceleração (0-100s)",
+                explanation: "O Super Trunfo GT vence o Muscle Car Beta por ser a carta Super Trunfo. Esta regra tem prioridade sobre a comparação de atributos."
+            },
+            {
+                id: 3,
+                card1Id: "B1", // Sedan B1
+                card2Id: "C1", // Hatch C1
+                attributeToCompare: "Potência (HP)",
+                explanation: `O Sedan B1 (300 HP) vence o Hatch C1 (180 HP) no atributo Potência, pois para Potência, um valor maior é melhor.`
+            },
+            {
+                id: 4,
+                card1Id: "PICKUP1", // Pickup Gamma
+                card2Id: "COMPACT1", // Compacto Delta
+                attributeToCompare: "Aceleração (0-100s)",
+                explanation: `A Pickup Gamma (8.0s) vence o Compacto Delta (9.0s) no atributo Aceleração, pois para Aceleração, um valor menor é melhor.`
+            },
+            { // Empate no atributo, sem ST ou grupos especiais envolvidos diretamente na vitória/derrota
+                id: 5,
+                card1Data: { name: "Carro X", image: "https://placehold.co/280x150/78716c/FFFFFF?text=Carro+X", attributes: { "Velocidade (km/h)": 200, "Potência (HP)": 250, "Aceleração (0-100s)": 6.0 }, isSuperTrunfo: false, specialGroup: null, id: "CX" },
+                card2Data: { name: "Carro Y", image: "https://placehold.co/280x150/a16207/FFFFFF?text=Carro+Y", attributes: { "Velocidade (km/h)": 200, "Potência (HP)": 240, "Aceleração (0-100s)": 6.2 }, isSuperTrunfo: false, specialGroup: null, id: "CY" },
+                attributeToCompare: "Velocidade (km/h)",
+                explanation: "Ambos os carros têm Velocidade de 200 km/h. Como não há Super Trunfo ou grupos especiais determinando o vencedor, o resultado é um empate neste atributo."
+            },
+            {
+                id: 6,
+                card1Id: "A1", // Esportivo A1
+                card2Id: "ST", // Super Trunfo GT (invertendo a ordem do puzzle 1)
+                attributeToCompare: "Potência (HP)",
+                explanation: "O Esportivo A1 (grupo A1) vence o Super Trunfo GT, independentemente do atributo Potência, devido à regra especial dos grupos A1-D1."
+            }
+        ];
+
+        // --- Variáveis de Estado do Jogo ---
+        let currentPuzzleIndex = 0;
+        let currentPuzzle = null;
+        let challengeAnswered = false;
+
+        // --- Referências aos Elementos do DOM ---
+        const card1Display = document.getElementById('card1Display');
+        const card2Display = document.getElementById('card2Display');
+        const attributeToCompareText = document.getElementById('attributeToCompareText');
+        const attributeRuleText = document.getElementById('attributeRuleText');
+        const feedbackArea = document.getElementById('feedbackArea');
+        const nextChallengeButton = document.getElementById('nextChallengeButton');
+        const decisionButtonsContainer = document.getElementById('decisionButtons');
+
+        // --- Funções do Jogo ---
+
+        /** Exibe uma carta na interface. */
+        function displayLogicCard(cardData, element, attributeToHighlight) {
+            element.innerHTML = ''; // Limpa conteúdo anterior
+
+            const img = document.createElement('img');
+            img.src = cardData.image;
+            img.alt = cardData.name;
+            img.className = 'card-image';
+            img.onerror = () => { img.src = 'https://placehold.co/280x150/CCCCCC/FFFFFF?text=Erro+Img'; };
+            element.appendChild(img);
+
+            const title = document.createElement('h4');
+            title.className = 'card-title';
+            title.textContent = cardData.name;
+            element.appendChild(title);
+
+            if (cardData.isSuperTrunfo) {
+                const badge = document.createElement('div');
+                badge.className = 'trunfo-badge';
+                badge.textContent = 'ST';
+                element.appendChild(badge);
+            } else if (cardData.specialGroup) {
+                const badge = document.createElement('div');
+                badge.className = 'special-group-badge';
+                badge.textContent = cardData.specialGroup;
+                element.appendChild(badge);
+            }
+
+            const attributesDiv = document.createElement('div');
+            attributesDiv.className = 'mt-2 flex-grow';
+            Object.entries(cardData.attributes).forEach(([attrName, attrValue]) => {
+                const attrEl = document.createElement('div');
+                attrEl.className = 'card-attribute';
+                if (attrName === attributeToHighlight) {
+                    attrEl.classList.add('highlight-attribute');
+                }
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'name';
+                nameSpan.textContent = attrName;
+                
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'value';
+                valueSpan.textContent = `${attrValue}${attributesMeta[attrName] ? ' ' + attributesMeta[attrName].unit : ''}`;
+
+                attrEl.appendChild(nameSpan);
+                attrEl.appendChild(valueSpan);
+                attributesDiv.appendChild(attrEl);
+            });
+            element.appendChild(attributesDiv);
+        }
+
+        /** Determina o vencedor real da rodada com base em todas as regras. */
+        function getActualWinner(card1, card2, attribute) {
+            // 1. Regra A1-D1 vs Super Trunfo
+            if (card1.specialGroup && ["A1", "B1", "C1", "D1"].includes(card1.specialGroup) && card2.isSuperTrunfo) return 'card1';
+            if (card2.specialGroup && ["A1", "B1", "C1", "D1"].includes(card2.specialGroup) && card1.isSuperTrunfo) return 'card2';
+
+            // 2. Regra Super Trunfo vs Normal
+            if (card1.isSuperTrunfo && !card2.isSuperTrunfo) return 'card1';
+            if (card2.isSuperTrunfo && !card1.isSuperTrunfo) return 'card2';
+            
+            // 3. Comparação de Atributo (se nenhuma regra ST/Grupo especial se aplicou ou ambas são ST/Grupo)
+            // (Nota: ST vs ST ou A1 vs A1 não é coberto por regras especiais, então vai para atributo)
+            const val1 = card1.attributes[attribute];
+            const val2 = card2.attributes[attribute];
+            const meta = attributesMeta[attribute];
+
+            if (val1 === val2) return 'draw';
+            if (meta.lowerIsBetter) {
+                return val1 < val2 ? 'card1' : 'card2';
+            } else {
+                return val1 > val2 ? 'card1' : 'card2';
+            }
+        }
+        
+        /** Carrega um desafio de lógica. */
+        function loadLogicPuzzle(index) {
+            if (index >= logicPuzzles.length) {
+                attributeToCompareText.textContent = "Parabéns!";
+                attributeRuleText.textContent = "Você completou todos os desafios de lógica!";
+                card1Display.innerHTML = '<div class="flex justify-center items-center h-full text-slate-500 text-xl">🎉</div>';
+                card2Display.innerHTML = '<div class="flex justify-center items-center h-full text-slate-500 text-xl">🎉</div>';
+                feedbackArea.textContent = "Excelente trabalho!";
+                feedbackArea.className = 'p-3 min-h-[70px] rounded-lg text-green-700 bg-green-100 border border-green-300 font-semibold';
+                decisionButtonsContainer.classList.add('hidden');
+                nextChallengeButton.classList.add('hidden');
+                return;
+            }
+
+            currentPuzzle = logicPuzzles[index];
+            challengeAnswered = false;
+
+            // Busca as cartas do fullDeck ou usa os dados diretos do puzzle
+            const card1Data = currentPuzzle.card1Data ? JSON.parse(JSON.stringify(currentPuzzle.card1Data)) : findCardById(currentPuzzle.card1Id);
+            const card2Data = currentPuzzle.card2Data ? JSON.parse(JSON.stringify(currentPuzzle.card2Data)) : findCardById(currentPuzzle.card2Id);
+            
+            if (!card1Data || !card2Data) {
+                 attributeToCompareText.textContent = "Erro ao carregar desafio.";
+                 console.error("Não foi possível carregar dados das cartas para o puzzle:", currentPuzzle);
+                 return;
+            }
+            currentPuzzle.card1 = card1Data; // Armazena as cartas carregadas no objeto do puzzle atual
+            currentPuzzle.card2 = card2Data;
+
+
+            displayLogicCard(currentPuzzle.card1, card1Display, currentPuzzle.attributeToCompare);
+            displayLogicCard(currentPuzzle.card2, card2Display, currentPuzzle.attributeToCompare);
+
+            attributeToCompareText.textContent = `Atributo em foco: ${currentPuzzle.attributeToCompare}`;
+            const rule = attributesMeta[currentPuzzle.attributeToCompare].lowerIsBetter ? "Menor é melhor" : "Maior é melhor";
+            attributeRuleText.textContent = `(Regra: ${rule})`;
+
+            feedbackArea.textContent = "Escolha uma opção acima.";
+            feedbackArea.className = 'p-3 min-h-[70px] rounded-lg text-slate-700 bg-slate-100 border border-slate-200';
+            nextChallengeButton.classList.add('hidden');
+            decisionButtonsContainer.classList.remove('hidden'); // Garante que os botões de decisão estão visíveis
+             // Reabilita os botões de decisão
+            Array.from(decisionButtonsContainer.children).forEach(button => button.disabled = false);
+        }
+
+        /** Lida com a escolha do usuário. */
+        function handleDecision(userChoice) {
+            if (challengeAnswered || !currentPuzzle) return;
+            challengeAnswered = true;
+
+            const actualWinner = getActualWinner(currentPuzzle.card1, currentPuzzle.card2, currentPuzzle.attributeToCompare);
+            
+            // Desabilita os botões de decisão após a escolha
+            Array.from(decisionButtonsContainer.children).forEach(button => button.disabled = true);
+
+            if (userChoice === actualWinner) {
+                feedbackArea.textContent = `Correto! ${currentPuzzle.explanation}`;
+                feedbackArea.className = 'p-3 min-h-[70px] rounded-lg text-green-700 bg-green-100 border border-green-300 font-semibold';
+            } else {
+                let correctWinnerName = '';
+                if (actualWinner === 'card1') correctWinnerName = currentPuzzle.card1.name;
+                else if (actualWinner === 'card2') correctWinnerName = currentPuzzle.card2.name;
+                else correctWinnerName = 'Empate';
+
+                feedbackArea.textContent = `Incorreto. A resposta correta seria "${correctWinnerName}". ${currentPuzzle.explanation}`;
+                feedbackArea.className = 'p-3 min-h-[70px] rounded-lg text-red-700 bg-red-100 border border-red-300 font-semibold';
+            }
+            nextChallengeButton.classList.remove('hidden');
+        }
+
+        // --- Event Listeners ---
+        decisionButtonsContainer.addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON' && event.target.dataset.choice) {
+                handleDecision(event.target.dataset.choice);
+            }
+        });
+
+        nextChallengeButton.addEventListener('click', () => {
+            currentPuzzleIndex++;
+            loadLogicPuzzle(currentPuzzleIndex);
+        });
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLogicPuzzle(currentPuzzleIndex);
+        });
+
+    </script>
+</body>
+</html>
