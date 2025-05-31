@@ -38,26 +38,20 @@ Será que a carta da esquerda leva a melhor? A da direita domina? Ou teremos um 
 
 ## 🚀 Como Entrar na Arena (Executar o Jogo)
 
-**Opção 1: Portal Online (via GitHub Pages - se configurado)**
-
-* Acesse: `[LINK DO SEU GITHUB PAGES AQUI]`
-    * *Substitua `[LINK DO SEU GITHUB PAGES AQUI]` pelo link real se você hospedar o projeto.*
-
-**Opção 2: Invocação Local (Download e Abrir)**
+**Opção 1: Invocação Local (Download e Abrir)**
 
 1.  Clone ou faça o download deste repositório:
     ```bash
-    git clone [https://github.com/](https://github.com/)[SEU-USUARIO-GITHUB]/[NOME-DO-REPOSITORIO].git
+    git clone [https://github.com/](https://github.com/)Vinicius1708/desafio-de-logica-super-trunfo.git
     ```
-    * *Substitua `[SEU-USUARIO-GITHUB]` e `[NOME-DO-REPOSITORIO]` pelos seus dados.*
 2.  Navegue até a pasta do projeto.
 3.  Abra o arquivo `index.html` (ou o nome do arquivo HTML principal) no seu navegador de preferência.
 
 ## 👤 O Mestre da Lógica (Desenvolvido Por)
 
-* **Autor:** `[SEU NOME OU NICKNAME AQUI]`
-* **Projeto Acadêmico:** Para a disciplina de `[NOME DA DISCIPLINA]`
-* **Guilda:** `[NOME DO SEU CURSO]` - `[NOME DA SUA INSTITUIÇÃO]`
+* **Autor:** `Vini Brigadeiro`
+* **Projeto Acadêmico:** Para a disciplina de `Introdução à Programação de Computadores`
+* **Guilda:** `Ciência da Computação` - `Estacio`
 
 ---
 
